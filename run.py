@@ -30,6 +30,29 @@ proj_types = {
     """15"""    'after_treat_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion']
 }
 
+
+proj_index = {
+    1:'hd_bm',
+    2:'ld_bm',
+    3:'1065_cert',
+    4:'fuels_lube_dev',
+    5:'frict_measure',
+    6:'engine_dev_gas',
+    7:'engine_dev_diesel',
+    8:'durability_hd',
+    9:'durability_ld',
+    10:'high_durability_hd',
+    11:'high_durability_ld',
+    12:'nvh',
+    13:'marine_noncert',
+    14:'hybrid_dev',
+    15:'after_treat_dev'
+}
+
+
+
+
+
 assets = {
     'ebench': 15,
     'transient_tc': 8,
@@ -123,7 +146,31 @@ def initMatrix(ind_class):
 
 def fitness_evaluate(individual):
 
+    proj_list = []
+
+    for i in range(26):
+        for j in range(52):
+    
+            if proj_list and individual[i][j] not in proj_list: 
+                proj_list.append(individual[i][j])
+            elif not proj_list:
+                proj_list.append(individual[i][j])
+                
+
+    for proj in proj_list:
+
+        import ipdb; ipdb.set_trace()
+        
+        project_type = proj_index[int(proj - 1)]  
+        
+            
+
+                
     fitness = 0
+
+    
+
+
 
     
     return (fitness, )
