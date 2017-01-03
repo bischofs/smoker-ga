@@ -2,7 +2,9 @@ import random
 import ipdb
 import numpy
 import numpy.matlib
-from random import randint
+from rdrand import RdRandom
+import os
+r = RdRandom()
 
 from deap import base
 from deap import creator
@@ -12,46 +14,42 @@ numpy.set_printoptions(linewidth=400,suppress=None,threshold=10000)
 IND_SIZE = 5
 
 proj_types = {
-    
-    """1"""   'hd_bm': ['ebench', 'transient_tc'],
-    """2"""    'ld_bm': ['steady_tc', 'humidity_ctrl', 'dac_sys ', 'ec_dyno ', 'oil_con ', 'cool_con ', 'air_con'],
-    """3"""    '1065_cert': ['transient_tc', 'bg3', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
-    """4"""    'fuels_lube_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
-    """5"""    'frict_measure': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
-    """6"""    'engine_dev_gas': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
-    """7"""    'engine_dev_diesel': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
-    """8"""    'durability_hd': ['steady_tc', 'dac_sys', 'ec_dyno'],
-    """9"""    'durability_ld': ['steady_tc', 'dac_sys', 'ec_dyno'],
-    """10"""    'high_durability_hd': ['transient_tc', 'dac_sys', 'ac_dyno'],
-    """11"""    'high_durability_ld': ['transient_tc', 'dac_sys', 'ac_dyno'],
-    """12"""    'nvh': ['nvh_tc', 'dac_sys', 'ac_dyno'],
-    """13"""    'marine_noncert': ['transient_tc', 'dac_sys', 'ac_dyno'],
-    """14"""    'hybrid_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion'],
-    """15"""    'after_treat_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion']
+
+    'hd_bm': ['ebench', 'transient_tc'],
+    'ld_bm': ['steady_tc', 'humidity_ctrl', 'dac_sys', 'ec_dyno', 'oil_con', 'cool_con', 'air_con'],
+    '1065_cert': ['transient_tc', 'bg3', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
+    'fuels_lube_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
+    'frict_measure': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
+    'engine_dev_gas': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
+    'engine_dev_diesel': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
+    'durability_hd': ['steady_tc', 'dac_sys', 'ec_dyno'],
+    'durability_ld': ['steady_tc', 'dac_sys', 'ec_dyno'],
+    'high_durability_hd': ['transient_tc', 'dac_sys', 'ac_dyno'],
+    'high_durability_ld': ['transient_tc', 'dac_sys', 'ac_dyno'],
+    'nvh': ['nvh_tc', 'dac_sys', 'ac_dyno'],
+    'marine_noncert': ['transient_tc', 'dac_sys', 'ac_dyno'],
+    'hybrid_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion'],
+    'after_treat_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion']
 }
 
 
-proj_index = {
-    1:'hd_bm',
-    2:'ld_bm',
-    3:'1065_cert',
-    4:'fuels_lube_dev',
-    5:'frict_measure',
-    6:'engine_dev_gas',
-    7:'engine_dev_diesel',
-    8:'durability_hd',
-    9:'durability_ld',
-    10:'high_durability_hd',
-    11:'high_durability_ld',
-    12:'nvh',
-    13:'marine_noncert',
-    14:'hybrid_dev',
-    15:'after_treat_dev'
-}
-
-
-
-
+proj_index = [
+    'hd_bm',
+    'ld_bm',
+    '1065_cert',
+    'fuels_lube_dev',
+    'frict_measure',
+    'engine_dev_gas',
+    'engine_dev_diesel',
+    'durability_hd',
+    'durability_ld',
+    'high_durability_hd',
+    'high_durability_ld',
+    'nvh',
+    'marine_noncert',
+    'hybrid_dev',
+    'after_treat_dev'
+]
 
 assets = {
     'ebench': 15,
@@ -129,8 +127,8 @@ def initMatrix(ind_class):
             
     for i in range(26):
 
-        proj_length = randint(20,230) / 7
-        proj_type = randint(1,15)
+        proj_length = r.randint(20,230) / 7
+        proj_type = r.randint(1,15)
         counter = -1
 
         for j in range(52):
@@ -147,7 +145,8 @@ def initMatrix(ind_class):
 def fitness_evaluate(individual):
 
     proj_list = []
-
+    assets_copy = assets.copy()
+    
     for i in range(26):
         for j in range(52):
     
@@ -155,23 +154,21 @@ def fitness_evaluate(individual):
                 proj_list.append(individual[i][j])
             elif not proj_list:
                 proj_list.append(individual[i][j])
-                
 
     for proj in proj_list:
-
-        import ipdb; ipdb.set_trace()
-        
-        project_type = proj_index[int(proj - 1)]  
-        
-            
-
                 
-    fitness = 0
+        project_type = proj_index[int(proj - 1)]  
+        used_assets = proj_types[project_type]
 
+        for asset in used_assets:
+            assets_copy[asset] -= 1
+
+    asset_sum = 0
+    for item in assets_copy.items():
+        asset_sum += item[1]
     
-
-
-
+    fitness = 1 / float(asset_sum)
+    fitness *= 100
     
     return (fitness, )
 
@@ -186,7 +183,7 @@ toolbox.register("evaluate", fitness_evaluate)
 
 pop = toolbox.population(n=300)
 
-NGEN = 100
+NGEN = 10000
 
 for g in range(NGEN):
     # Select the next generation individuals
@@ -204,5 +201,4 @@ for g in range(NGEN):
 
 
 
-
-
+import ipdb; ipdb.set_trace()
