@@ -53,9 +53,9 @@ proj_index = [
 
 assets = {
     'ebench': 15,
-    'transient_tc': 8,
-    'steady_tc':4,
-    'nvh_tc': 1,
+    'transient_tc': 16,
+    'steady_tc':8,
+    'nvh_tc': 2,
     'ftir': 7,
     'bg3': 5,
     '1065_equip': 5,
@@ -127,17 +127,19 @@ def initMatrix(ind_class):
             
     for i in range(26):
 
-        proj_length = r.randint(20,230) / 7
-        proj_type = r.randint(1,15)
-        counter = -1
+        for k in range(50):
+        
+            proj_length = r.randint(20,230) / 7
+            proj_type = r.randint(1,15)
+            counter = -1
 
-        for j in range(52):
-            if(ind[i,j] == 0):
-               counter += 1
-            if(counter == proj_length):
-                while(proj_length > 0):
-                    ind[i,j - proj_length] = proj_type
-                    proj_length -= 1
+            for j in range(52):
+                if(ind[i,j] == 0):
+                    counter += 1
+                if(counter == proj_length):
+                    while(proj_length > 0):
+                        ind[i,j - proj_length] = proj_type
+                        proj_length -= 1
                             
     return ind 
 
@@ -146,28 +148,31 @@ def fitness_evaluate(individual):
 
     proj_list = []
     assets_copy = assets.copy()
-    
-    for i in range(26):
-        for j in range(52):
-    
-            if proj_list and individual[i][j] not in proj_list: 
-                proj_list.append(individual[i][j])
-            elif not proj_list:
-                proj_list.append(individual[i][j])
 
-    for proj in proj_list:
-                
-        project_type = proj_index[int(proj - 1)]  
-        used_assets = proj_types[project_type]
-
-        for asset in used_assets:
-            assets_copy[asset] -= 1
-
-    asset_sum = 0
-    for item in assets_copy.items():
-        asset_sum += item[1]
+    column_asset_sum = 0
+    columns_asset_list = []
     
-    fitness = 1 / float(asset_sum)
+    for j in range(52):
+
+        for i in range(26):
+
+            project_type = proj_index[int(individual[i][j] - 1)]  
+            used_assets = proj_types[project_type]
+            for asset in used_assets:
+                assets_copy[asset] -= 1
+            
+        column_asset_sum = 0
+        for item in assets_copy.items():
+            column_asset_sum += item[1]
+            
+        assets_copy = assets.copy()
+        columns_asset_list.append(column_asset_sum)
+
+    total_asset_sum = 0
+    for column in columns_asset_list:
+        total_asset_sum += column
+    
+    fitness = 1 / float(total_asset_sum)
     fitness *= 100
     
     return (fitness, )
@@ -183,7 +188,7 @@ toolbox.register("evaluate", fitness_evaluate)
 
 pop = toolbox.population(n=300)
 
-NGEN = 10000
+NGEN = 10
 
 for g in range(NGEN):
     # Select the next generation individuals
@@ -198,7 +203,11 @@ for g in range(NGEN):
         ind.fitness.values = fit
 
     pop[:] = offspring
-
-
-
+    
 import ipdb; ipdb.set_trace()
+
+
+
+
+
+
