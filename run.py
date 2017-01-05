@@ -15,9 +15,9 @@ IND_SIZE = 5
 
 proj_types = {
 
-    'hd_bm': ['ebench', 'transient_tc'],
+    'hd_bm': ['ebench', 'dac_sys'],
     'ld_bm': [ 'humidity_ctrl', 'dac_sys', 'ec_dyno', 'oil_con', 'cool_con', 'air_con'],
-    '1065_cert': ['bg3', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
+    '1065_cert': ['bg3', 'ebench', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
     'fuels_lube_dev': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
     'frict_measure': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
     'engine_dev_gas': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
@@ -31,6 +31,28 @@ proj_types = {
     'hybrid_dev': ['dac_sys', 'ac_dyno', 'orion', 'battery_em'],
     'after_treat_dev': ['dac_sys', 'ac_dyno', 'orion']
 }
+
+
+
+assets = {
+    'ebench': 15,
+    'nvh_equip': 2, 
+    'ftir': 7,
+    'bg3': 5,
+    '1065_equip': 5,
+    'humidity_ctrl': 4,
+    'dac_sys': 14,
+    'ac_dyno': 10,
+    'ec_dyno': 35,
+    'oil_con': 7,
+    'cool_con': 8,
+    'air_con': 4,
+    'orion': 3,
+    'nvh_equip': 1,
+    'battery_em': 1
+}
+
+
 
 #assets cell does not have
 cell_constraints = {
@@ -114,25 +136,6 @@ proj_index = [
 ]
 
 
-assets = {
-    'ebench': 15,
-    'transient_tc': 16,
-    'steady_tc':8,
-    'nvh_tc': 2,
-    'ftir': 7,
-    'bg3': 5,
-    '1065_equip': 5,
-    'humidity_ctrl': 4,
-    'dac_sys': 14,
-    'ac_dyno': 10,
-    'ec_dyno': 35,
-    'oil_con': 7,
-    'cool_con': 8,
-    'air_con': 4,
-    'orion': 3,
-    'nvh_equip': 1
-}
-
 initialProjects = [
     #1
     [12, [0,0], [0,15]],
@@ -182,7 +185,7 @@ def initMatrix(ind_class):
 
     mtrx = numpy.matlib.zeros([26, 52])
     ind = ind_class(mtrx.A)
-    valid = False
+
     #initial project 
     for proj in initialProjects:
         length = proj[2][1] - proj[1][1]
@@ -194,7 +197,7 @@ def initMatrix(ind_class):
     #Stochastic fill 
     for i in range(26):
         for k in range(50):
-
+            valid = False
             while(not valid):
                 proj_length = r.randint(20,230) / 7
                 proj_type = r.randint(1,15)
@@ -218,7 +221,7 @@ def initMatrix(ind_class):
 def check_valid(row, proj_type):
 
     invalid_assets = cell_constraints[cell_index[row]]
-    needed_assets = proj_types[proj_index[proj_type]]
+    needed_assets = proj_types[proj_index[proj_type - 1]]
     
     for needed_asset in needed_assets:
         for invalid_asset in invalid_assets:
@@ -272,7 +275,7 @@ toolbox.register("evaluate", fitness_evaluate)
 
 pop = toolbox.population(n=300)
 
-NGEN = 10
+NGEN = 10000
 
 for g in range(NGEN):
     # Select the next generation individuals
