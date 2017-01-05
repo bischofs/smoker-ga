@@ -16,21 +16,83 @@ IND_SIZE = 5
 proj_types = {
 
     'hd_bm': ['ebench', 'transient_tc'],
-    'ld_bm': ['steady_tc', 'humidity_ctrl', 'dac_sys', 'ec_dyno', 'oil_con', 'cool_con', 'air_con'],
-    '1065_cert': ['transient_tc', 'bg3', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
-    'fuels_lube_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
-    'frict_measure': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
-    'engine_dev_gas': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
-    'engine_dev_diesel': ['transient_tc', 'dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
-    'durability_hd': ['steady_tc', 'dac_sys', 'ec_dyno'],
-    'durability_ld': ['steady_tc', 'dac_sys', 'ec_dyno'],
-    'high_durability_hd': ['transient_tc', 'dac_sys', 'ac_dyno'],
-    'high_durability_ld': ['transient_tc', 'dac_sys', 'ac_dyno'],
-    'nvh': ['nvh_tc', 'dac_sys', 'ac_dyno'],
-    'marine_noncert': ['transient_tc', 'dac_sys', 'ac_dyno'],
-    'hybrid_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion'],
-    'after_treat_dev': ['transient_tc', 'dac_sys', 'ac_dyno', 'orion']
+    'ld_bm': [ 'humidity_ctrl', 'dac_sys', 'ec_dyno', 'oil_con', 'cool_con', 'air_con'],
+    '1065_cert': ['bg3', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
+    'fuels_lube_dev': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
+    'frict_measure': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
+    'engine_dev_gas': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
+    'engine_dev_diesel': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
+    'durability_hd': ['dac_sys', 'ec_dyno'],
+    'durability_ld': [ 'dac_sys', 'ec_dyno'],
+    'high_durability_hd': [ 'dac_sys', 'ac_dyno'],
+    'high_durability_ld': [ 'dac_sys', 'ac_dyno'],
+    'nvh': ['dac_sys', 'ac_dyno', 'nvh_equip'],
+    'marine_noncert': ['dac_sys', 'ac_dyno'],
+    'hybrid_dev': ['dac_sys', 'ac_dyno', 'orion', 'battery_em'],
+    'after_treat_dev': ['dac_sys', 'ac_dyno', 'orion']
 }
+
+#assets cell does not have
+cell_constraints = {
+
+    '1': ['1065_equip','humidity_ctrl'],
+    '2': ['ac_dyno', 'battery_em','1065_equip','humidity_ctrl'],
+    '3n':['ac_dyno','battery_em','1065_equip'],
+    '3s':['ac_dyno','battery_em','1065_equip'],
+    '4n':['battery_em','1065_equip'],
+    '4s':['battery_em','1065_equip'],
+    '5n':['battery_em','1065_equip'],
+    '5s':['battery_em','1065_equip'],
+    '6n':['battery_em','ac_dyno','1065_equip','humidity_ctrl'],
+    '6s':['battery_em','ac_dyno','1065_equip','humidity_ctrl'],
+    '7n':['battery_em'],
+    '7s':['battery_em'],
+    '8n':['battery_em'],
+    '8s':['battery_em'],
+    '9n':['battery_em','1065_equip'],
+    '9s':['battery_em','1065_equip'],
+    '10n':['battery_em'],
+    '10s':['battery_em'],
+    '11n':['battery_em','1065_equip','humidity_ctrl'],
+    '11s':['battery_em','1065_equip','humidity_ctrl'],
+    '12n':['battery_em','humidity_ctrl'],
+    '12s':['battery_em','humidity_ctrl'],
+    '13n':['humidity_ctrl'],
+    '13s':['humidity_ctrl'],
+    '14n':['battery_em','humidity_ctrl'],
+    '14s':['battery_em','humidity_ctrl']
+}
+
+
+cell_index = [
+
+    '1',
+    '2',
+    '3n',
+    '3s',
+    '4n',
+    '4s',
+    '5n',
+    '5s',
+    '6n',
+    '6s',
+    '7n',
+    '7s',
+    '8n',
+    '8s',
+    '9n',
+    '9s',
+    '10n',
+    '10s',
+    '11n',
+    '11s',
+    '12n',
+    '12s',
+    '13n',
+    '13s',
+    '14n',
+    '14s'
+]
 
 
 proj_index = [
@@ -51,6 +113,7 @@ proj_index = [
     'after_treat_dev'
 ]
 
+
 assets = {
     'ebench': 15,
     'transient_tc': 16,
@@ -66,7 +129,8 @@ assets = {
     'oil_con': 7,
     'cool_con': 8,
     'air_con': 4,
-    'orion': 3
+    'orion': 3,
+    'nvh_equip': 1
 }
 
 initialProjects = [
@@ -118,31 +182,51 @@ def initMatrix(ind_class):
 
     mtrx = numpy.matlib.zeros([26, 52])
     ind = ind_class(mtrx.A)
-
+    valid = False
+    #initial project 
     for proj in initialProjects:
         length = proj[2][1] - proj[1][1]
         while(length > 0):
             ind[proj[1][0], (proj[2][1] - length)] = proj[0]
             length -= 1
             
+
+    #Stochastic fill 
     for i in range(26):
-
         for k in range(50):
-        
-            proj_length = r.randint(20,230) / 7
-            proj_type = r.randint(1,15)
-            counter = -1
 
-            for j in range(52):
-                if(ind[i,j] == 0):
-                    counter += 1
-                if(counter == proj_length):
-                    while(proj_length > 0):
-                        ind[i,j - proj_length] = proj_type
-                        proj_length -= 1
-                            
+            while(not valid):
+                proj_length = r.randint(20,230) / 7
+                proj_type = r.randint(1,15)
+                counter = -1
+
+                valid = check_valid(i, proj_type)
+
+                if valid == True:
+                    for j in range(52):
+                        if(ind[i,j] == 0):
+                            counter += 1
+                        if(counter == proj_length):
+                            while(proj_length > 0):
+                                ind[i,j - proj_length] = proj_type
+                                proj_length -= 1
+                                
     return ind 
 
+
+
+def check_valid(row, proj_type):
+
+    invalid_assets = cell_constraints[cell_index[row]]
+    needed_assets = proj_types[proj_index[proj_type]]
+    
+    for needed_asset in needed_assets:
+        for invalid_asset in invalid_assets:
+            if needed_asset == invalid_asset:
+                return False 
+
+    return True 
+    
 
 def fitness_evaluate(individual):
 
