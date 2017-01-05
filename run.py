@@ -8,7 +8,7 @@ r = RdRandom()
 
 from deap import base
 from deap import creator
-from deap import tools
+from deap import tools, algorithms 
 numpy.set_printoptions(linewidth=400,suppress=None,threshold=10000)
 
 IND_SIZE = 5
@@ -32,8 +32,6 @@ proj_types = {
     'after_treat_dev': ['dac_sys', 'ac_dyno', 'orion']
 }
 
-
-
 assets = {
     'ebench': 15,
     'nvh_equip': 2, 
@@ -51,8 +49,6 @@ assets = {
     'nvh_equip': 1,
     'battery_em': 1
 }
-
-
 
 #assets cell does not have
 cell_constraints = {
@@ -85,7 +81,6 @@ cell_constraints = {
     '14s':['battery_em','humidity_ctrl']
 }
 
-
 cell_index = [
 
     '1',
@@ -116,7 +111,6 @@ cell_index = [
     '14s'
 ]
 
-
 proj_index = [
     'hd_bm',
     'ld_bm',
@@ -134,7 +128,6 @@ proj_index = [
     'hybrid_dev',
     'after_treat_dev'
 ]
-
 
 initialProjects = [
     #1
@@ -192,7 +185,6 @@ def initMatrix(ind_class):
         while(length > 0):
             ind[proj[1][0], (proj[2][1] - length)] = proj[0]
             length -= 1
-            
 
     #Stochastic fill 
     for i in range(26):
@@ -216,8 +208,6 @@ def initMatrix(ind_class):
                                 
     return ind 
 
-
-
 def check_valid(row, proj_type):
 
     invalid_assets = cell_constraints[cell_index[row]]
@@ -229,7 +219,6 @@ def check_valid(row, proj_type):
                 return False 
 
     return True 
-    
 
 def fitness_evaluate(individual):
 
@@ -265,24 +254,38 @@ def fitness_evaluate(individual):
     return (fitness, )
 
 
+
+
+def mutate_rows(individual):
+
+    
+    return individual, 
+
+
 toolbox = base.Toolbox()
 
 toolbox.register("individual", initMatrix, creator.Individual)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("evaluate", fitness_evaluate)
+toolbox.register("mutate", mutate_rows)
+toolbox.register("select", tools.selTournament, tournsize=3)
 
-pop = toolbox.population(n=300)
 
-NGEN = 10000
+pop = toolbox.population(n=4)
+
+NGEN = 10
 
 for g in range(NGEN):
-    # Select the next generation individuals
-    offspring = toolbox.select(pop, len(pop))
-    # Clone the selected individuals
-    offspring = map(toolbox.clone, offspring)
+        
 
+    # Select and clone the next generation individuals
+    offspring = map(toolbox.clone, toolbox.select(pop, len(pop)))
+    
+    # Apply crossover and mutation on the offspring
+    offspring = algorithms.varAnd(offspring, toolbox, cxpb=0.5, mutpb=0.1)
+        
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
@@ -291,10 +294,5 @@ for g in range(NGEN):
 
     pop[:] = offspring
     
-import ipdb; ipdb.set_trace()
-
-
-
-
 
 
