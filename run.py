@@ -6,6 +6,9 @@ from rdrand import RdRandom
 import os
 r = RdRandom()
 
+from decimal import *
+getcontext().prec = 30
+
 from deap import base
 from deap import creator
 from deap import tools, algorithms 
@@ -247,7 +250,10 @@ def fitness_evaluate(individual):
     total_asset_sum = 0
     for column in columns_asset_list:
         total_asset_sum += column
-    
+
+    if(total_asset_sum == 0):
+        import ipdb; ipdb.set_trace()
+        
     fitness = 1 / float(total_asset_sum)
     fitness *= 100
     
@@ -256,10 +262,30 @@ def fitness_evaluate(individual):
 
 
 
-def mutate_rows(individual):
+def mutate_rows(ind):
 
-    
-    return individual, 
+    row = r.randint(0,25)
+    rand_proj = r.randint(1,15) 
+    count = 0
+    end_column = 0
+
+    for i in range(51):
+
+        if(ind[row, i] != ind[row, i + 1] and count == 0):
+            start_column = i + 1
+            count = 1
+        elif(ind[row, i] != ind[row, i + 1] and count == 1):
+            end_column = i + 1
+            break
+
+    if(end_column != 0):
+        
+        length = end_column - start_column
+        
+        for i in range(length):
+            ind[row, start_column + i] = rand_proj
+
+    return ind, 
 
 
 toolbox = base.Toolbox()
@@ -273,9 +299,9 @@ toolbox.register("mutate", mutate_rows)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 
-pop = toolbox.population(n=4)
+pop = toolbox.population(n=300)
 
-NGEN = 10
+NGEN = 100
 
 for g in range(NGEN):
         
@@ -296,3 +322,4 @@ for g in range(NGEN):
     
 
 
+import ipdb; ipdb.set_trace()
