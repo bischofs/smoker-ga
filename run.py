@@ -245,21 +245,18 @@ def fitness_evaluate(individual):
             column_asset_sum += item[1]
             
         assets_copy = assets.copy()
-        columns_asset_list.append(column_asset_sum)
+        columns_asset_list.append(abs(column_asset_sum))
 
     total_asset_sum = 0
     for column in columns_asset_list:
         total_asset_sum += column
-
-    if(total_asset_sum == 0):
-        import ipdb; ipdb.set_trace()
         
     fitness = 1 / float(total_asset_sum)
     fitness *= 100
+
+    individual.cols = columns_asset_list
     
-    return (fitness, )
-
-
+    return (fitness,)
 
 
 def mutate_rows(ind):
@@ -301,7 +298,7 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 pop = toolbox.population(n=300)
 
-NGEN = 100
+NGEN = 100000
 
 for g in range(NGEN):
         
