@@ -1,3 +1,6 @@
+from scoop import futures
+import multiprocessing
+
 import random
 import ipdb
 import numpy
@@ -12,28 +15,37 @@ getcontext().prec = 30
 from deap import base
 from deap import creator
 from deap import tools, algorithms 
-numpy.set_printoptions(linewidth=400,suppress=None,threshold=10000)
+numpy.set_printoptions(linewidth=400, suppress=None, threshold=10000)
+
+
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", numpy.ndarray, fitness=creator.FitnessMax )
 
 IND_SIZE = 5
 
 proj_types = {
 
     'hd_bm': ['ebench', 'dac_sys'],
-    'ld_bm': [ 'humidity_ctrl', 'dac_sys', 'ec_dyno', 'oil_con', 'cool_con', 'air_con'],
-    '1065_cert': ['bg3', 'ebench', '1065_equip', 'dac_sys', 'ac_dyno', 'air_con'],
-    'fuels_lube_dev': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
-    'frict_measure': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con'],
-    'engine_dev_gas': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
-    'engine_dev_diesel': ['dac_sys', 'ac_dyno', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
-    'durability_hd': ['dac_sys', 'ec_dyno'],
-    'durability_ld': [ 'dac_sys', 'ec_dyno'],
-    'high_durability_hd': [ 'dac_sys', 'ac_dyno'],
-    'high_durability_ld': [ 'dac_sys', 'ac_dyno'],
-    'nvh': ['dac_sys', 'ac_dyno', 'nvh_equip'],
-    'marine_noncert': ['dac_sys', 'ac_dyno'],
-    'hybrid_dev': ['dac_sys', 'ac_dyno', 'orion', 'battery_em'],
-    'after_treat_dev': ['dac_sys', 'ac_dyno', 'orion']
+    'ld_bm': [ 'humidity_ctrl', 'dac_sys', 'oil_con', 'cool_con', 'air_con'],
+    '1065_cert': ['bg3', 'ebench', '1065_equip', 'dac_sys', 'air_con'],
+    'fuels_lube_dev': ['dac_sys', 'oil_con', 'cool_con', 'air_con'],
+    'frict_measure': ['dac_sys', 'oil_con', 'cool_con', 'air_con'],
+    'engine_dev_gas': ['dac_sys',  'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
+    'engine_dev_diesel': ['dac_sys', 'oil_con', 'cool_con', 'air_con', 'humidity_ctrl'],
+    'durability_hd': ['dac_sys'],
+    'durability_ld': [ 'dac_sys'],
+    'high_durability_hd': [ 'dac_sys'],
+    'high_durability_ld': [ 'dac_sys'],
+    'nvh': ['dac_sys','nvh_equip'],
+    'marine_noncert': ['dac_sys'],
+    'hybrid_dev': ['dac_sys', 'orion', 'battery_em'],
+    'after_treat_dev': ['dac_sys', 'orion']
 }
+
+
+# if cell has fixed asset prefer this
+
+# if project requires asset and cell has no fixed assedt use asset
 
 assets = {
     'ebench': 15,
@@ -42,12 +54,11 @@ assets = {
     'bg3': 5,
     '1065_equip': 5,
     'humidity_ctrl': 4,
-    'dac_sys': 14,
-    'ac_dyno': 10,
-    'ec_dyno': 35,
+    'dac_sys': 28,
     'oil_con': 7,
     'cool_con': 8,
-    'air_con': 4,
+    'air_con': 6,
+    'air_con_fixed': 5,
     'orion': 3,
     'nvh_equip': 1,
     'battery_em': 1
@@ -56,32 +67,32 @@ assets = {
 #assets cell does not have
 cell_constraints = {
 
-    '1': ['1065_equip','humidity_ctrl'],
-    '2': ['ac_dyno', 'battery_em','1065_equip','humidity_ctrl'],
-    '3n':['ac_dyno','battery_em','1065_equip'],
-    '3s':['ac_dyno','battery_em','1065_equip'],
+    '1': ['1065_equip','humidity_ctrl', 'air_con_fixed'],
+    '2': ['ac_dyno', 'battery_em','1065_equip','humidity_ctrl', 'air_con_fixed'],
+    '3n':['ac_dyno','battery_em','1065_equip','humidity_ctrl', 'air_con_fixed'],
+    '3s':['ac_dyno','battery_em','1065_equip','humidity_ctrl', 'air_con_fixed'],
     '4n':['battery_em','1065_equip'],
     '4s':['battery_em','1065_equip'],
     '5n':['battery_em','1065_equip'],
     '5s':['battery_em','1065_equip'],
-    '6n':['battery_em','ac_dyno','1065_equip','humidity_ctrl'],
-    '6s':['battery_em','ac_dyno','1065_equip','humidity_ctrl'],
+    '6n':['battery_em','ac_dyno','1065_equip','humidity_ctrl', 'air_con_fixed'],
+    '6s':['battery_em','ac_dyno','1065_equip','humidity_ctrl', 'air_con_fixed'],
     '7n':['battery_em'],
     '7s':['battery_em'],
-    '8n':['battery_em'],
-    '8s':['battery_em'],
+    '8n':['battery_em','humidity_ctrl', 'air_con_fixed'],
+    '8s':['battery_em','humidity_ctrl', 'air_con_fixed'],
     '9n':['battery_em','1065_equip'],
     '9s':['battery_em','1065_equip'],
     '10n':['battery_em'],
     '10s':['battery_em'],
-    '11n':['battery_em','1065_equip','humidity_ctrl'],
-    '11s':['battery_em','1065_equip','humidity_ctrl'],
-    '12n':['battery_em','humidity_ctrl'],
-    '12s':['battery_em','humidity_ctrl'],
-    '13n':['humidity_ctrl'],
-    '13s':['humidity_ctrl'],
-    '14n':['battery_em','humidity_ctrl'],
-    '14s':['battery_em','humidity_ctrl']
+    '11n':['battery_em','1065_equip','humidity_ctrl', 'air_con_fixed'],
+    '11s':['battery_em','1065_equip','humidity_ctrl', 'air_con_fixed'],
+    '12n':['battery_em','humidity_ctrl', 'air_con_fixed'],
+    '12s':['battery_em','humidity_ctrl', 'air_con_fixed'],
+    '13n':['humidity_ctrl', 'air_con_fixed'],
+    '13s':['humidity_ctrl', 'air_con_fixed'],
+    '14n':['battery_em','humidity_ctrl', 'air_con_fixed'],
+    '14s':['battery_em','humidity_ctrl', 'air_con_fixed']
 }
 
 cell_index = [
@@ -174,9 +185,6 @@ initialProjects = [
 ]
 
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", numpy.ndarray, fitness=creator.FitnessMax )
-
 def initMatrix(ind_class):
 
     mtrx = numpy.matlib.zeros([26, 52])
@@ -237,17 +245,22 @@ def fitness_evaluate(individual):
 
             project_type = proj_index[int(individual[i][j] - 1)]  
             used_assets = proj_types[project_type]
+
             for asset in used_assets:
-                assets_copy[asset] -= 1
+                if(asset + '_fixed' not in cell_constraints[cell_index[i]]):   #cell has no fixed asset of type "asset"
+                    assets_copy[asset] -= 1
+                else:
+                    assets_copy[asset + '_fixed'] -= 1  
             
         column_asset_sum = 0
         for item in assets_copy.items():
-            column_asset_sum += item[1]
+            column_asset_sum += abs(item[1])
             
         assets_copy = assets.copy()
-        columns_asset_list.append(abs(column_asset_sum))
+        columns_asset_list.append(column_asset_sum)
 
-    total_asset_sum = 0
+        total_asset_sum = 0
+
     for column in columns_asset_list:
         total_asset_sum += column
         
@@ -265,7 +278,7 @@ def mutate_rows(ind):
     rand_proj = r.randint(1,15) 
     count = 0
     end_column = 0
-
+    
     for i in range(51):
 
         if(ind[row, i] != ind[row, i + 1] and count == 0):
@@ -285,6 +298,7 @@ def mutate_rows(ind):
     return ind, 
 
 
+
 toolbox = base.Toolbox()
 
 toolbox.register("individual", initMatrix, creator.Individual)
@@ -295,28 +309,41 @@ toolbox.register("evaluate", fitness_evaluate)
 toolbox.register("mutate", mutate_rows)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
+pop = toolbox.population(n=50)
 
-pop = toolbox.population(n=300)
 
-NGEN = 100000
-
-for g in range(NGEN):
-        
-
-    # Select and clone the next generation individuals
-    offspring = map(toolbox.clone, toolbox.select(pop, len(pop)))
-    
-    # Apply crossover and mutation on the offspring
-    offspring = algorithms.varAnd(offspring, toolbox, cxpb=0.5, mutpb=0.1)
-        
-    # Evaluate the individuals with an invalid fitness
-    invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-    for ind, fit in zip(invalid_ind, fitnesses):
-        ind.fitness.values = fit
-
-    pop[:] = offspring
+def main():
     
 
+    NGEN = 5000
 
-import ipdb; ipdb.set_trace()
+    for g in range(NGEN):
+    
+
+        # Select and clone the next generation individuals
+        offspring = toolbox.map(toolbox.clone, toolbox.select(pop, len(pop)))
+    
+        # Apply crossover and mutation on the offspring
+        offspring = algorithms.varAnd(offspring, toolbox, cxpb=0.5, mutpb=0.1)
+    
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+            
+        pop[:] = offspring
+    
+
+    import ipdb;ipdb.set_trace()
+    return pop
+
+
+
+# if __name__ == '__main__':
+
+#     toolbox.register('map', futures.map)
+    
+pop = main()
+
+
